@@ -1,0 +1,296 @@
+﻿//USEUNIT dpi
+
+
+function RevisingMI()
+{
+  utilities.Test =  utilities.Extent.createTest("Revising an MI");
+  TS1_RevisingMI()
+  TS2_OneRevisonEditAtATime()
+  TS3_AddNewOwner()
+}
+
+//***
+var oldMiRevisionID;
+var newMIRevisonID;
+//****
+
+function EnoviaIntegration()
+{
+  
+  sMaterialId = "20161032"
+//  tGCASSearchText = "//input[@placeholder='Search']"
+//  tGCASSearchBtn = "//div[@data-rec-id='run_btn_search']"
+//  
+//  EnterValue_KeysCSS(tGCASSearchText, sMaterialId)
+//  ClickButtonCSS(tGCASSearchBtn)
+  fnAdvanceSearch(false)
+  tFirstRow = `//div[@class='wux-controls-abstract wux-layouts-collectionview-cell wux-layouts-datagridview-cell']//span[text()='${sMaterialId}']/..//span[@class='fonticon fonticon-2x fonticon-down-open']`
+
+  ClickButtonCSS(tFirstRow)
+  aqUtils.Delay(2000, "waiting for pop up window")
+  tOpenRecordBtn  = "//li[@id='action_DisplayDetails']/span[text()='Open']"
+  ClickButtonCSS(tOpenRecordBtn)
+  
+  
+  // tostore old Revion id ****
+  iframeobj=getIframeObject('pgVPDSectionAttributes') 
+   tRevisionLabel="//tr[@id='calc_Revision']/td[2]"
+   objRevison_Label=iframeobj.FindElement(tRevisionLabel)
+   Log.Message("Old revision ::"+objRevison_Label.contentText)
+   
+  oldMiRevisionID=objRevison_Label.contentText
+  //***************
+  tRevisionBtn = "//td[@id='CPNProductDataRevise']"
+
+  objIframeMain=getIframeObject('detailsDisplay')   
+  objReviseBtn=objIframeMain.FindElement(tRevisionBtn);
+  
+  //need to add impl for fetching revise version
+  revisonID="001"
+  objReviseBtn.Click()
+    
+  objDialog=Sys.Browser("chrome").Page("https://plmqa.pg.com/enovia/common/emxNavigatorDialog.jsp")
+    
+  if(objDialog.Exists && objDialog.VisibleOnScreen){
+      
+    //#######################
+    title_desc = "DPI integration automation test"
+    iframeP_xpath="//iframe[@id='content']"
+    iframe=objDialog.FindElement(iframeP_xpath)
+
+    title_xpath="//input[@id='Title']"
+    objTitletxtBx=iframe.FindElement(title_xpath)
+    objTitletxtBx.SetText(title_desc)
+  
+    description_xpath="//textarea[@id='Description']"
+    objDesctxtBx=iframe.FindElement(description_xpath)
+    objDesctxtBx.Keys("^a"+title_desc)
+    
+    objDoneBtn=iframe.FindElement("//button[@class='btn-primary' and text()='Done']")
+    objDoneBtn.Click()
+    
+    //############################################
+     aqUtils.Delay(3000)
+     iframeobj=getIframeObject('pgVPDSectionAttributes') 
+  
+     revisionText_xpath="//tr[@id='calc_Revision']/td[2]"
+     objRevison_Label=iframeobj.FindElement(revisionText_xpath)
+     //****
+     newMIRevisonID=objRevison_Label.contentText
+     if(newMIRevisonID > oldMiRevisionID){
+       //***
+       Log.Checkpoint(`Revison is changed:: old one was ${revisonID} and new one is ${objRevison_Label.contentText}`)
+     }else{
+       Log.Error(`Revison number was not matching..: old one was ${revisonID} and new one is ${objRevison_Label.contentText}`)
+     } 
+  }else{
+    Log.Error("Revise dialog page was not found...!!!")
+  }
+   
+  fnSelectCategoryMenu("Change Management")
+  addNewCA_xpath="//td[@id='ECMAddToNewCA']"
+  
+  iframeObj=getIframeObject('ECMCAs') 
+  objAddNewCABtn=iframeObj.FindElement(addNewCA_xpath)
+  objAddNewCABtn.Click()
+  objFrame2 = FindElementCSS("//iframe[@name='slideInFrame']")
+  if(objFrame2.Exists){
+    title_desc="DPI integration automation test ca"
+
+    title_xpath="//input[@title='Title']"
+    objTitletxtBx=objFrame2.FindElement(title_xpath)
+    objTitletxtBx.SetText(title_desc)
+  
+    description_xpath="//textarea[@id='DescriptionId']"
+    objDesctxtBx=objFrame2.FindElement(description_xpath)
+    objDesctxtBx.Keys("^a"+title_desc)
+    
+    objDoneBtn=objFrame2.FindElement("//button[@class='btn-primary' and text()='OK']")
+    objDoneBtn.Click()
+    
+  }else{
+    Log.Error("CA add details side iframe is not displayed...!!!")
+  }
+
+  reason="create new revise MI for Testing automation"
+  reviseTab_xpath="//div[@id='catMenu']//li[@name='li_type_pgMakingInstructions']"
+  ClickButtonCSS(reviseTab_xpath)
+  iframeObj = getIframeObject('pgVPDSectionAttributes') 
+  
+  tEditReasonBtn="//td[@id='pgVPDSectionAttributeEditAll']"
+  ClickButtonCSS(tEditReasonBtn, iframeObj)
+
+  tEditReasonTxt = "//input[@id='Reason For change']"
+  EnterValueCSS(tEditReasonTxt, reason, iframeObj)
+
+  tDoneBtn = "//button[@class='btn-primary' and text()='Done']"
+  ClickButtonCSS(tDoneBtn, iframeObj)  
+  
+  //*****  
+  aqUtils.Delay(3000)
+  tHomePageIcon="//div[@id='divExtendedHeaderNavigation']//button[@class='home']"
+  ClickButtonCSS(tHomePageIcon) 
+  aqUtils.Delay(5000, "Waiting for reflecting values")
+  fnAdvanceSearch(true)
+  
+  tFirstRow = `//div[@class='wux-controls-abstract wux-layouts-collectionview-cell wux-layouts-datagridview-cell']//span[text()='${sMaterialId}']/..//span[@class='fonticon fonticon-2x fonticon-down-open']`
+
+  ObjTableSearchData=FindElementCSS(tFirstRow)
+  if(ObjTableSearchData.Exists){
+    Log.Checkpoint(sMaterialId+" is created with "+newMIRevisonID+" revision successfully...")
+  }else{
+    Log.Error("Revise data was not reflected...!!!")
+  }
+  //****
+}
+
+//to display only release status record only...
+
+function fnAdvanceSearch(addReleaseFlag){
+  aqUtils.Delay(3000)
+  tSearchdropdown="//div[@id='searchFieldDropdown']"
+  tAdvanceSearch="//li[@class='item secondaryMenuAdvanced']"
+  ClickButtonCSS(tSearchdropdown) 
+  ClickButtonCSS(tAdvanceSearch) 
+  typeOption ="Making Instruction"
+  tTypeOption="//span[text()='"+typeOption+"']"
+  tTypeComboBx="//input[@placeholder='Select a type (optional)']"
+  EnterValueCSS(tTypeComboBx, typeOption)
+  
+  sMaterialId = "20161032"
+  tName="//div[@title='Name']/following-sibling::div//input"
+  EnterValueCSS(tName, sMaterialId)
+  
+  tSeeMoreLink="//div[contains(string(), 'More Criteria') and @class='criteria-toggle']"
+  ObjSeeMoreLink=FindElementCSS(tSeeMoreLink)
+  ObjSeeMoreLink.Click()
+  
+  tMaturityStatus="//div[@title='Maturity State']/following-sibling::div//input"
+  EnterValueCSS(tMaturityStatus, "Release")
+  
+  if(addReleaseFlag){
+      tRevision = "//div[@title='Minor Revision']/following-sibling::div//input"
+      EnterValueCSS(tRevision, newMIRevisonID)
+  }
+  
+  tSearchBtn="//button[@class='btn-primary search-button btn btn-root']"
+  ClickButtonCSS(tSearchBtn)  
+  aqUtils.Delay(3000)
+}
+
+function TS1_RevisingMI()
+{
+  try{
+    var fnTitle = "TS 1: Revising MI";
+    utilities.TestCase = utilities.Test.createNode(fnTitle);
+    Log.AppendFolder(fnTitle)
+    var tPnGLogo      = xpath.pngLogo;
+    var tSearchMITb   = xpath.searchRepoTB;
+    var tCheckinBtn   = xpath.checkinBtn;
+    var sSearchValue  = utilities.rev_GCASNo;
+    var sSearchType   = utilities.searchByGCASNo;
+
+    ClickAndWaitCSS(tPnGLogo, tSearchMITb)  
+    result = SearchMI(sSearchType, sSearchValue)  
+    tCurrentRecord = result.tCurrRow
+    MIMoreInfoOperations(tCurrentRecord, "Revise MI")
+    ClickButtonCSS(tCheckinBtn)
+  }catch (e){
+    strMessage = fnTitle + " was failed: " + e.message
+    LogError(strMessage);
+    utilities.TestCase.fail_2(strMessage);
+  }
+  finally{
+    Log.PopLogFolder();
+  }
+}
+
+function TS2_OneRevisonEditAtATime()
+{
+  try{
+    fnTitle = "TS 2: Only one revision at a time";
+    utilities.TestCase = utilities.Test.createNode(fnTitle);
+    Log.AppendFolder(fnTitle)
+    var tPnGLogo    = xpath.pngLogo;
+    var tSearchMITb = xpath.searchRepoTB
+    var tMIName     = xpath.MINameTB;
+    var tMIRevision = xpath.MIRevisionTB;
+    var tFetchFromEnoviaBtn = xpath.fetchFromEnoviaBtn;
+    var tSelectEnoviaEnvCmb = xpath.selectEnoviaEnvCmb;
+    var tEnoviaEnvOKBtn = xpath.okEnoviaEnvBtn;
+    var tEnoviaEnvPwdTB = xpath.enoviaEnvPwdTB;
+    var tEnoviaLinkError = xpath.enoviaLinkErrorMsg;
+    var tEnoviaLinkStatus = xpath.enoviaLinkStatusMsg;
+    var tCloseWindowBtn = xpath.closeWindowBtn;
+    var sSearchValue = utilities.rev_NewRev;
+    var sSearchType = utilities.searchByGCASNo;
+    ClickAndWaitCSS(tPnGLogo, tSearchMITb)  
+    result = SearchMI(sSearchType, sSearchValue)
+    tCurrRow = result.tCurrRow
+    MIMoreInfoOperations(tCurrRow, "Copy MI")
+  
+    MI = SplitMIandRevision(sSearchValue)
+    Name = MI.Name;
+    Revision = MI.Rev;
+    EnterValueCSS(tMIName, Name)
+    EnterValueCSS(tMIRevision, Revision)
+  
+    ClickAndWaitCSS(tFetchFromEnoviaBtn, tSelectEnoviaEnvCmb)
+  
+    EnterValue_KeysCSS(tSelectEnoviaEnvCmb, "QA")
+  
+    ClickAndWaitCSS(tEnoviaEnvOKBtn, tEnoviaEnvPwdTB)
+    EnterValue_KeysCSS(tEnoviaEnvPwdTB, utilities.authPassword)
+    ClickAndWaitCSS(tEnoviaEnvOKBtn, tEnoviaLinkError)
+    sEnoviaLinkStatus = GetPropertyValue(tEnoviaLinkStatus, "innerText")
+    LogCheckpoint("Expected error message displayed.")
+    LogCheckpoint(sEnoviaLinkStatus)
+    ClickButtonCSS(tCloseWindowBtn)
+  }catch (e){
+    strMessage = fnTitle + " was failed: " + e.message
+    LogError(strMessage);
+    utilities.TestCase.fail_2(strMessage);
+  }
+  finally{
+    Log.PopLogFolder();
+  }
+}
+
+
+function TS3_AddNewOwner()
+{
+  try{
+    ownername = "m.bm.1"
+    fnTitle = "TS 3: Add New co-owner [" + ownername + "] and verify edit";
+    utilities.TestCase = utilities.Test.createNode(fnTitle);
+    Log.AppendFolder(fnTitle)
+    var tPnGLogo      = xpath.pngLogo;
+    var tSearchMITb   = xpath.searchRepoTB;
+    var tCheckoutBtn  = xpath.checkoutBtn;
+    var sSearchValue = utilities.rev_NewRev;
+    var sSearchType = utilities.searchByGCASNo;
+    
+    ClickAndWaitCSS(tPnGLogo, tSearchMITb)  
+    result = SearchMI(sSearchType, sSearchValue)
+    tCurrRow = result.tCurrRow
+    MIMoreInfoOperations(tCurrRow, "View MI")
+    AddMIOwner(ownername)
+    
+    // loginto DPI with new owner
+    LogintoDPI(utilities.owner1_username, utilities.owner1_password)
+    result = SearchMI(sSearchType, sSearchValue)
+    tCurrentRecord = result.tCurrRow
+    MIMoreInfoOperations(tCurrentRecord, "View MI")
+    objExp = FindElementCSS(tCheckoutBtn)
+    if (objExp.Visible){
+      LogCheckpoint("Newly added user is able to edit the MI when it was checked-in by other user.")
+    }
+  }catch (e){
+    strMessage = fnTitle + " was failed: " + e.message
+    LogError(strMessage);
+    utilities.TestCase.fail_2(strMessage);
+  }
+  finally{
+    Log.PopLogFolder();
+  }
+}

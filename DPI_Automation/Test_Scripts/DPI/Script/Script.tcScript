@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root signature="{9252F941-DB23-4FCA-AA50-858B33BB4A19}" version="11.40">
+	<children>
+		<folder name="FunctionLibraries">
+			<child name="common" key="{64B9A03A-A061-4F2E-9B69-72F59BA47A6D}" path="common.js" />
+			<child name="dpi" key="{56AAA21D-65BF-43EF-A063-ED44BA6C7794}" path="dpi.js" />
+			<child name="commonCSS" key="{85EFC48B-D7A2-4FA5-9E0E-5A9A6BD63C58}" path="commonCSS.js" />
+			<child name="utilities" key="{AC09591F-34A8-418F-A29C-CE528359D951}" path="utilities.js" />
+			<child name="xpath" key="{B0C1633E-34C8-480F-9B04-C9342DD2B8FA}" path="xpath.js" />
+			<child name="GeneralEvents" key="{BBEDB4F3-CEF4-4951-9960-FAA41341D15A}" path="GeneralEvents.js" />
+			<child name="dpiProductPage" key="{6565CD17-42E9-492A-A9F1-75110FCBAFDD}" path="dpiProductPage.js" />
+			<child name="Enovia" key="{CF50E68D-F5F1-44B3-BAE4-2F8171CC9093}" path="Enovia.js" />
+		</folder>
+		<child name="_1_SearchingMI" key="{028E06D7-5BAA-4C0D-9538-92A0286088FF}" path="_1_SearchingMI.js" />
+		<child name="_2_RevisingMI" key="{32CD3B2F-2759-40CC-B6C9-2ECEB479EBE7}" path="_2_RevisingMI.js" />
+		<child name="_3_ImportView" key="{4C01CB56-7B19-4A53-8F4E-C7B2F5C325AE}" path="_3_ImportView.js" />
+	</children>
+</Root>

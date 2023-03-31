@@ -1,0 +1,342 @@
+﻿//USEUNIT common
+/*--------------------------------------------------------- 02 ---------------------------------------------------------
+  Description     : Checking whether the desired object exists or not
+  arg - objExp    : Argument contains an expected object
+  ret - fStatus   : A boolean variable contains the status of the function
+
+  Created By      : Balasubramanian M; Created On: dd-mmm-yyyy */
+  
+function FindElementCSS(strSearchText, objParent)
+{
+  var i;
+  var objExp;
+  try{
+    if (typeof objParent === 'undefined' ) { 
+      objParent = Sys.Browser("chrome").Page("*");
+    }
+    Log.Enabled = false;
+    for (i = 0; i <= 5; i++){
+      objExp = objParent.FindElement(strSearchText)
+      if ((!objExp.Exists) || (!objExp.Visible)){
+        aqUtils.Delay(3000);
+//        FindElementCSS(strSearchText, objParent)
+//      }else{
+//        break;
+      }
+    }
+    Log.Enabled = true;
+  }catch (e){
+    Log.Error("Checking for object existence was failed: " + e.message);
+  }
+  return objExp
+}
+
+/*--------------------------------------------------------- 02 ---------------------------------------------------------
+  Description     : Checking whether the desired object exists or not
+  arg - objExp    : Argument contains an expected object
+  ret - fStatus   : A boolean variable contains the status of the function
+
+  Created By      : Balasubramanian M; Created On: dd-mmm-yyyy */
+  
+function FindElementsCSS(strSearchText, objParent)
+{
+  var arrElements;
+  try{
+    if (typeof objParent === 'undefined') { 
+      objParent = Sys.Browser("chrome").Page("*");
+    }
+    arrElements = objParent.FindElements(strSearchText)
+  }catch (e){
+    Log.Error("Checking for object existence was failed: " + e.message);
+  }
+  return arrElements
+}
+
+function ClickButtonCSS(strSearchText, objParent)
+{
+  var objExp;
+  try{
+    objExp = FindElementCSS(strSearchText, objParent)
+    //objExp.scrollIntoView();
+    objExp.scrollIntoViewIfNeeded();
+    objExp.HoverMouse();
+    aqUtils.Delay(1000)
+    objExp.Click()
+//    Sys.Browser("chrome").Page("*").Wait();
+//    CustomDelay("Standard", "Waiting to click on the button...")
+  }catch (e){
+    Log.Error("Click button operation is failed: " + e.message);
+  }
+  return objExp;
+}
+
+
+function WaitForObjectCSS(strSearchText, objParent)
+{
+  var objExp;
+  var lCounter;
+  var fStatus;
+//  if (typeof retry === 'undefined'){
+//    retry=30
+//  }
+//  if(typeof objParent === 'undefined' || objParent == ''){
+//    objParent='undefined'
+//  }
+  try{
+    // Waiting for 300 seconds for an expected object
+    for (lCounter = 1; lCounter <= 10; lCounter++){
+      objExp = FindElementCSS(strSearchText, objParent)
+      if ((objExp.Exists == true) && (objExp.Visible == true) && (objExp.Enabled == true)){
+        fStatus = true;
+//        Log.Message("Expected " + strSearchText + " is found.")
+        CustomDelay("Standard", "Waiting until the object loads...");
+        break;
+      }
+      CustomDelay("Standard", "Waiting until the object loads...");
+    }
+    if ((lCounter == 10) && (fStatus == false)){
+      Log.Error("Object not found in 60 attempts");
+    }
+  }catch (e){
+    Log.Error("Waiting for an object is failed: " + e.message);
+  }
+  return objExp;
+}
+
+
+function ClickAndWaitCSS(strBtnText, strExpText, objParent)
+{
+  var objExp;
+  try{
+    ClickButtonCSS(strBtnText, objParent)
+    objExp = WaitForObjectCSS(strExpText, objParent)
+  }catch (e){
+    Log.Error("Click on a button and wait for an expected object is failed: " + e.message);
+  }
+  return objExp;
+}
+
+function EnterValueCSS(strSearchText, strInputVal, objParent)
+{
+  var strActValue;
+  try{
+    objExp = FindElementCSS(strSearchText, objParent)
+    if (objExp.Exists){
+      objExp.HoverMouse();
+      objExp.SetText (strInputVal);
+      CustomDelay("Standard", "Waiting until the object loads...");
+      var strActValue = objExp.Text;
+      objExp.Keys ("[Tab]");
+      if (Trim(aqString.ToUpper(strInputVal)) != Trim(aqString.ToUpper(strActValue))){
+        Log.Error("Input value '" + strInputVal + "' is not entered");
+      }
+    }else
+    {
+      Log.Error("Object '" + strSearchText + "' does not exists");
+    }
+  }catch (e){
+    Log.Error("Entering value into textbox is failed: " + e.message);
+  }
+  return objExp;
+}
+
+function EnterValue_KeysCSS(strSearchText, strInputVal, objParent)
+{
+  var strActValue;
+  try{
+    objExp = FindElementCSS(strSearchText, objParent)
+    objExp.HoverMouse();
+    objExp.Click();
+    objExp.Keys ("^a")
+//    objExp.Keys ("[BS]")
+    objExp.Keys (strInputVal);
+    CustomDelay("Standard", "Waiting until the object loads...");
+    objExp.Keys ("[Tab]");
+    var strActValue = Trim(objExp.value);
+    if (aqString.ToUpper(strInputVal) != aqString.ToUpper(strActValue)){
+      Log.Error("Input value '" + strInputVal + "' is not entered");
+    }
+  }catch (e){
+    Log.Error("Entering value into textbox is failed: " + e.message);
+  }
+  return objExp;
+}
+
+
+function SelectComboCSS(argComboTag, argComboVal, objParent)
+{
+  var sSelectBtnTag = argComboTag + "//span[@class='k-select']";
+  var objCombo = FindElementCSS(argComboTag, objParent);
+  var objSelectBtn = FindElementCSS(sSelectBtnTag, objParent);
+  var currVal = objCombo.innerText;
+  if (currVal != argComboVal){
+//    objCombo.Click();
+    CustomDelay("Standard")
+    objSelectBtn.Click();
+    sComboItem = "//ul[@aria-hidden='false']//*[normalize-space()='" + argComboVal + "']"
+    ClickButtonCSS(sComboItem, objParent)
+  }
+  
+}
+
+function SelectComboWithValueTagCSS(argSearchText, argComboVal, argComboText)
+{
+  var objCombo = FindElementCSS(argSearchText);
+  var currVal = objCombo.innerText;
+  if (currVal != argComboVal){
+    objCombo.Click();
+    CustomDelay("Standard")
+    ClickButtonCSS(argComboText)
+  }
+  
+}
+
+function SelectClearableComboCSS(argSearchText, argComboVal)
+{
+  var objCombo = FindElementCSS(argSearchText);
+  var currVal = objCombo.innerText;
+  if (currVal != argComboVal){
+    objCombo.Click();
+    objCombo.Keys ("^a");
+    objCombo.Keys (argComboVal);
+    CustomDelay("Standard")
+    sComboItem = "//li[text()='" + argComboVal + "']"
+    ClickButtonCSS(sComboItem)
+  }
+  
+}
+
+function GetPropertyValue(argSearchText, argPropertyName, objParent)
+{
+  var strPropertyValue=null;
+  
+  var objExp = FindElementCSS(argSearchText, objParent)
+  
+  if(objExp.Exists){
+  switch (argPropertyName)
+  {
+    case "innerText":
+      var strPropertyValue = objExp.innerText;
+      break;
+    case "className":
+      var strPropertyValue = objExp.className;
+      break;
+    case "value":
+      var strPropertyValue = objExp.value;
+      break;
+    case "role":
+      var strPropertyValue = objExp.role;
+      break;
+    case "checked":
+      var strPropertyValue = objExp.checked;
+      break;
+    case "visible":
+      var strPropertyValue = objExp.visible;
+      break;
+    case "exists":
+      var strPropertyValue = objExp.exists;
+      break;
+    case "contentText":
+      var strPropertyValue = objExp.contentText;
+      break;
+    case "childElementCount":
+      var strPropertyValue = objExp.childElementCount;
+      break;										  
+    default:
+      Log.Error("Property Name '" + argPropertyName + "' not declared.")
+  }
+  }
+  return strPropertyValue;
+}
+
+function SearchExpectedIDCSS(sTableTag, argExpID, objParent)
+{
+  var CellPos = [];
+  sSearchTag = sTableTag + "//*[text()='" + argExpID + "']"
+  var objExpID = FindElementCSS(sSearchTag, objParent)
+  if (objExpID.Exists == true){
+    objExpID.Click();
+    CellPos[0] = objExpID.RowIndex;
+    CellPos[1] = objExpID.ColumnIndex;
+    Log.Message("Expected ID '" + argExpID + "' was found.");
+  }else{
+    Log.Error("Expected ID " + argExpID + " was not found."); 
+  }
+  return CellPos;
+}
+
+
+function getIframeObject(iframeName){
+  var iframe;
+  
+  page = Sys.Browser("edge").Page("https://plmqa.pg.com/enovia*")
+  switch (iframeName){
+    case "content":
+      iframeP_xpath = "//iframe[@id='content']"
+      objIFrame     = FindElementCSS(iframeP_xpath, page)
+      break
+    case "detailsDisplay":
+      iframeP_xpath = "//iframe[@id='content']"
+      objIF_C       = FindElementCSS(iframeP_xpath, page)
+      iFrameC_xpath = "//iframe[@name='detailsDisplay']"
+      objIFrame     = FindElementCSS(iFrameC_xpath, objIF_C)
+      break;
+    case "portalDisplay":
+      iframeP_xpath = "//iframe[@id='content']"
+      objIF_C       = FindElementCSS(iframeP_xpath, page)
+      iFrameC_xpath = "//iframe[@name='detailsDisplay']"
+      objIF_DD      = FindElementCSS(iFrameC_xpath, objIF_C)
+      iframeP_xpath = "//iframe[@name='portalDisplay']"
+      objIFrame     = FindElementCSS(iframeP_xpath, objIF_DD)
+      break;
+    case "pgVPDSectionAttributes":
+      iframeP_xpath= "//iframe[@id='content']"
+      objIF_C       = FindElementCSS(iframeP_xpath, page)
+      iFrameC_xpath = "//iframe[@name='detailsDisplay']"
+      objIF_DD      = FindElementCSS(iFrameC_xpath, objIF_C)
+      iframeP_xpath = "//iframe[@name='portalDisplay']"
+      objIF_PD      = FindElementCSS(iframeP_xpath, objIF_DD)
+      
+      iframec2_xpath= "//iframe[@name='pgVPDSectionAttributes']"
+      objIFrame     = FindElementCSS(iframec2_xpath, objIF_PD)
+      
+      break;
+        
+    case "pgDSMRouteTemplates":
+      iframeP_xpath="//iframe[@id='content']"
+      objIF_C       = FindElementCSS(iframeP_xpath, page)
+      iFrameC_xpath="//iframe[@name='detailsDisplay']"
+      objIF_DD      = FindElementCSS(iFrameC_xpath, objIF_C)
+      iframeP_xpath="//iframe[@name='portalDisplay']"
+      objIF_PD      = FindElementCSS(iframeP_xpath, objIF_DD)
+      
+      iframeP_xpath="//iframe[@name='pgDSMRouteTemplates']"
+      objIFrame     = FindElementCSS(iframeP_xpath, objIF_PD)
+      
+      break;
+    case "slideInFrame":
+      iframe_xpath="//iframe[@name='slideInFrame']"
+      objIFrame     = FindElementCSS(iframe_xpath, page)
+      break;
+    case 'ECMCAs':
+      iframeP_xpath="//iframe[@id='content']"
+      objIF_C       = FindElementCSS(iframeP_xpath, page)
+      iFrameC_xpath="//iframe[@name='detailsDisplay']"
+      objIF_DD      = FindElementCSS(iFrameC_xpath, objIF_C)
+      iframec1_xpath="//iframe[@name='portalDisplay']"
+      objIF_PD      = FindElementCSS(iframec1_xpath, objIF_DD)
+      iframec2_xpath="//iframe[@name='ECMCAs']"
+      objIFrame     = FindElementCSS(iframec2_xpath, objIF_PD)
+      }
+   return objIFrame;
+}
+
+
+
+function fnSelectCategoryMenu(menu){  
+  //  menu='Files'
+  plantMenu_xpath="//li[@title='"+menu+"']"
+  ClickButtonCSS(plantMenu_xpath)  
+  aqUtils.Delay(3000,"waiting for loading table")
+  
+}

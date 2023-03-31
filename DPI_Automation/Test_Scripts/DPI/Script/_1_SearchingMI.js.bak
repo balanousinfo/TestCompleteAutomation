@@ -1,0 +1,279 @@
+﻿//USEUNIT dpi
+//USEUNIT _2_RevisingMI
+
+function dPI_Automation()
+{
+  _1_SearchingMI.SearchingMI()
+  _2_RevisingMI.RevisingMI()
+}
+
+function SearchingMI()
+{
+  utilities.Test =  utilities.Extent.createTest("Searching an MI");
+//  TS1_SearchMI_UnauthorizedUser()
+//  TS2_SearchMI_AuthorizedUser()
+//  TS3_SearchMI_ByOwnerName()
+//  TS4_SearchMI_ByPlantName()
+//  TS5_SearchMI_CheckedOutByOthers()
+  TS6_SearchMI_FastEditAndCheckin()
+  TS7_GetAllRevisions()
+}
+
+function TS1_SearchMI_UnauthorizedUser()
+{
+  try{
+    // Initializing Variables
+    var dpiUsername = utilities.unAuthUsername;
+    var dpiPassword = utilities.unAuthPassword;
+    var sSearchVal  = utilities.sGCASNo;
+    var sAuthType   = utilities.sUnauthorized;
+    var sSearchType = utilities.searchByGCASNo;
+    
+    
+    fnTitle = "TS 1: Search MI - Unauthorized User [" + dpiUsername + "]]";
+    utilities.TestCase = utilities.Test.createNode(fnTitle);
+    Log.AppendFolder(fnTitle)
+    
+    // Login with unauthorized user
+    dpi.LogintoDPI(dpiUsername, dpiPassword)
+    result = dpi.SearchMI(sSearchType, sSearchVal)
+    if (result.status){
+      ViewMIRevision(sAuthType, 1)
+    }
+  }catch (e){
+    strMessage = fnTitle + " was failed: " + e.message
+    LogError(strMessage);
+    utilities.TestCase.fail_2(strMessage);
+  }
+  finally{
+    Log.PopLogFolder();
+  }
+}
+function TS2_SearchMI_AuthorizedUser()
+{
+  try{
+    // Login with authorized user
+    var dpiUsername = utilities.authUsername;
+    var dpiPassword = utilities.authPassword;
+    var sSearchVal  = utilities.sGCASNo;
+    var sAuthType   = utilities.sAuthorized;
+    var sSearchType = utilities.searchByGCASNo;
+    
+    var fnTitle = "TS 2: Search MI - Authorized User [" + dpiUsername + "]";
+    utilities.TestCase = utilities.Test.createNode(fnTitle);
+    Log.AppendFolder(fnTitle)
+    
+    dpi.LogintoDPI(dpiUsername, dpiPassword)
+  
+    var result = dpi.SearchMI(sSearchType, sSearchVal)
+    if (result.status){
+      ViewMIRevision(sAuthType, 1)
+    }
+  }catch (e){
+    strMessage = fnTitle + " was failed: " + e.message
+    LogError(strMessage);
+    utilities.TestCase.fail_2(strMessage);
+  }finally{
+    Log.PopLogFolder();
+  }
+}
+
+
+function TS3_SearchMI_ByOwnerName()
+{
+  try{
+    var sSearchVal  = utilities.sOwnerName;
+    var sAuthType   = utilities.sAuthorized;
+    var tPnGLogo    = xpath.pngLogo;
+    var tSearchMITb = xpath.searchRepoTB
+    var sSearchType = utilities.searchByOwner;
+    
+    var fnTitle = "TS 3: Search MI - By Owner Name [" + sSearchVal + "]";
+    utilities.TestCase = utilities.Test.createNode(fnTitle);
+    Log.AppendFolder(fnTitle)
+        
+    ClickAndWaitCSS(tPnGLogo, tSearchMITb)
+    
+    var result = dpi.SearchMI(sSearchType, sSearchVal)
+    if (result.status){
+      ViewMIRevision(sAuthType, 1)
+    }
+  }catch (e){
+    strMessage = fnTitle + " was failed: " + e.message
+    LogError(strMessage);
+    utilities.TestCase.fail_2(strMessage);
+  }finally{
+    Log.PopLogFolder();
+  }
+}
+
+
+function TS4_SearchMI_ByPlantName()
+{
+  try{
+    var sSearchVal  = utilities.sPlantName;
+    var sAuthType   = utilities.sAuthorized;
+    var tPnGLogo    = xpath.pngLogo;
+    var tSearchMITb = xpath.searchRepoTB
+    var sSearchType = utilities.searchByPlant;
+    
+    var fnTitle = "TS 4: Search MI - By Plant Name [" + sSearchVal + "]";
+    utilities.TestCase = utilities.Test.createNode(fnTitle);
+    Log.AppendFolder(fnTitle)
+    
+    ClickAndWaitCSS(tPnGLogo, tSearchMITb)  
+    var result = dpi.SearchMI(sSearchType, sSearchVal)
+    if (result){
+      ViewMIRevision(sAuthType, 5)
+    }
+  }catch (e){
+    strMessage = fnTitle + " was failed: " + e.message
+    LogError(strMessage);
+    utilities.TestCase.fail_2(strMessage);
+  }finally{
+    Log.PopLogFolder();
+  }
+}
+
+function TS5_SearchMI_CheckedOutByOthers()
+{
+  try{
+    var fnTitle = "TS 5: Search MI - Checked Out By Others";
+    utilities.TestCase = utilities.Test.createNode(fnTitle);
+    Log.AppendFolder(fnTitle)
+    var sSearchVal    = utilities.sOtherMIID ;
+    var sAuthType     = utilities.sAuthorized;
+    var sSearchType   = utilities.searchByID;
+    var tPnGLogo      = xpath.pngLogo;
+    var tSearchMITb   = xpath.searchRepoTB;
+    var tcheckoutBtn  = xpath.checkoutBtn; 
+    var tSelectMakingAreaBtn  = xpath.selectMakingAreaBtn;
+    var tMakingAreaValue      = xpath.makingAreaValue;
+    var tChooseMakingAreaBtn  = xpath.chooseMakingAreaBtn;
+    var tCheckoutStatusLbl    = xpath.checkoutstatusLbl;
+    var tCheckoutMsgLbl       = xpath.checkoutMessageLbl;
+    var tcloseWindowBtn       = xpath.closeWindowBtn;
+    
+    ClickAndWaitCSS(tPnGLogo, tSearchMITb);
+    var result = dpi.SearchMI(sSearchType, sSearchVal);
+    if (result){
+      ViewMIRevision(sAuthType, 1);
+      btnStatus = GetPropertyValue(tcheckoutBtn, "visible");
+      if (btnStatus == false){
+        LogCheckpoint("'Check Out' button is not available when the MI revision was checked-out by other user");
+      }
+      ClickButtonCSS(tSelectMakingAreaBtn);
+      ClickButtonCSS(tMakingAreaValue);
+      ClickButtonCSS(tChooseMakingAreaBtn);
+      
+      objExp = FindElementCSS(tCheckoutStatusLbl);
+      if (objExp){
+        notyStatus  = GetPropertyValue(tCheckoutStatusLbl, "innerText")
+        notyMessage = GetPropertyValue(tCheckoutMsgLbl, "innerText")
+        LogCheckpoint("User is unable to modify the MI which was already checked-out by other user(s).")
+        LogCheckpoint(notyStatus + " ==> " + notyMessage)
+        ClickButtonCSS(tcloseWindowBtn);
+        ClearNotifications();
+      }
+    }
+  }catch (e){
+    strMessage = fnTitle + " was failed: " + e.message
+    LogError(strMessage);
+    utilities.TestCase.fail_2(strMessage);
+  }
+  finally{
+    Log.PopLogFolder();
+    
+  }
+}
+
+
+
+function TS6_SearchMI_FastEditAndCheckin()
+{
+  try{
+    var fnTitle = "TS 6: Search MI - Fast Edit and Check-In";
+    utilities.TestCase = utilities.Test.createNode(fnTitle);
+    Log.AppendFolder(fnTitle)
+    var sSearchVal  = utilities.sOtherMIID_2;
+    var sAuthType   = utilities.sAuthorized;
+    var sSearchType = utilities.searchByID;
+    var tPnGLogo    = xpath.pngLogo;
+    var tSearchMITb = xpath.searchRepoTB
+    var tFastEditsBtn = xpath.fastEditBtn
+    var tSaveBtn      = xpath.saveBtn;
+    var tFECheckinBtn   = xpath.fastEditcheckinBtn
+    var tFECheckoutBtn = xpath.fastEditCheckoutBtn
+    ClickAndWaitCSS(tPnGLogo, tSearchMITb)  
+    var result = dpi.SearchMI(sSearchType, sSearchVal)
+    if (result){
+      ViewMIRevision(sAuthType, 1)
+    }
+    
+    ClickButtonCSS(tFastEditsBtn)
+    
+//    Log.Enabled = false;
+//    ClickButtonCSS(tFECheckoutBtn)
+//    Log.Enabled = true;
+//    aqUtils.Delay(2000)
+//    objEditBox = Sys.Browser("chrome").Page("https://azw-dpiqa-01.np-cloud-pg.com/dpi_uat/index.jsp#").Panel(0).Panel(0).Panel("ctrln_fastedits_grid").Panel(0).Panel(1).Panel(0).Panel(2).Panel(1).Panel(0).Panel(0).Panel(1).Panel(7).Panel(0)
+//    objEditBox.Click();
+//    objEditBox.DblClick()
+//    aqUtils.Delay(2000)
+//    objTextbox = Sys.Browser("chrome").Page("https://azw-dpiqa-01.np-cloud-pg.com/dpi_uat/index.jsp#").Panel(0).Panel(0).Panel("ctrln_fastedits_grid").Panel(0).Panel(1).Panel(0).Panel(2).Panel(1).Panel(0).Panel(0).Panel(1).Panel(7).Panel(0).Panel(0).Panel(0).Textbox(0)
+//    txtVal = Math.floor(Math.random() * (99 - 22 + 1)) + 22
+//    EnterValue(objTextbox, txtVal)
+//    objEditBox.Keys("[Esc]")
+//    
+//    ClickButtonCSS(tSaveBtn)
+//    aqUtils.Delay(6000)
+//    ClickButtonCSS(tFECheckinBtn)
+    LogCheckpoint("User is able to perform 'Fast Edit', 'Save' and 'Check-In' the MI.")
+    
+  }catch (e){
+    strMessage = fnTitle + " was failed: " + e.message
+    LogError(strMessage);
+    utilities.TestCase.fail_2(strMessage);
+  }
+  finally{
+    Log.PopLogFolder();
+  }
+}
+
+
+function TS7_GetAllRevisions()
+{
+  try{
+    fnTitle = "TS 7: Get All Revisions";
+    utilities.TestCase = utilities.Test.createNode(fnTitle);
+    Log.AppendFolder(fnTitle)
+    var recordCount;
+    var tGCASTable    = xpath.gcasTbl
+    var tPnGLogo      = xpath.pngLogo;
+    var tSearchMITb   = xpath.searchRepoTB;
+    var sSearchVal    = utilities.sGCASNo;
+    
+    ClickAndWaitCSS(tPnGLogo, tSearchMITb)  
+    EnterValue_KeysCSS(tSearchMITb, sSearchVal)
+    aqUtils.Delay(5000)
+    recordCount = GetChildCountCSS(tGCASTable)
+    for (var j = 0; j <= recordCount-1; j++){
+      tRecordRow = tGCASTable + "/div[@row-index='" + j + "']"
+      sRecordId = GetPropertyValue(tRecordRow + "/div[@col-id='id']"      , "innerText")
+      sName     = GetPropertyValue(tRecordRow + "/div[@col-id='name']"    , "innerText")
+      sDesc     = GetPropertyValue(tRecordRow + "/div[@col-id='desc']"    , "innerText")
+      sStatus   = GetPropertyValue(tRecordRow + "/div[@col-id='status']"  , "innerText")
+      sProcess  = GetPropertyValue(tRecordRow + "/div[@col-id='process']" , "innerText")
+      strMessage = "Record ID: " + sRecordId + "; Name: " + sName + "; Desc: " + sDesc + "; Status: " + sStatus + "; Process: " + sProcess
+      LogMessage(strMessage)
+      utilities.TestCase.info_2(strMessage);
+    }
+  }catch (e){
+    strMessage = fnTitle + " was failed: " + e.message
+    LogError(strMessage);
+    utilities.TestCase.fail_2(strMessage);
+  }
+  finally{
+    Log.PopLogFolder();
+  }
+}
