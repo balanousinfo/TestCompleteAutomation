@@ -1,0 +1,731 @@
+﻿//USEUNIT commonCSS
+//USEUNIT utilities
+
+
+// #################################################### 01 ####################################################
+// Description    : Launching & running the browser(s) in a private mode
+// arg - sBrowser : Argument contains desired browser name (Ex: chrome)
+// arg - sAppURL  : Argument contains desired application URL (Ex: Mozart URL)
+
+function RunBrowserInPrivateMode(sBrowser, sAppURL)
+{
+  try{
+    var objPage;
+    if (Sys.WaitBrowser(sBrowser).Exists){
+//      ClearBrowsingHistory()
+      Sys.Browser(sBrowser).Terminate();
+      aqUtils.Delay(1000)
+    }
+    
+    if (sBrowser == "chrome"){
+      privacyKey = "--incognito"
+    }else if(sBrowser == "edge"){
+      privacyKey = "--inprivate"
+    }
+    
+    Browsers.Item(sBrowser).RunOptions = privacyKey
+    Browsers.Item(sBrowser).Run(sAppURL);
+    Sys.Browser(sBrowser).BrowserWindow(0).Maximize();
+    objPage = Sys.Browser(sBrowser).Page("*");
+  }catch (e){
+    Log.Error("Running a browser in private mode is failed: " + e.message);
+    GetPropertyValue()
+  }
+  return objPage;
+}
+
+// #################################################### 02 ####################################################
+// Description    : Checking whether the desired object exists or not
+// arg - objExp   : Argument contains an expected object
+// ret - fStatus  : A boolean variable contains the status of the function
+
+function objExists(objExp)
+{
+  fStatus = false;
+  try{
+    if ((objExp.Exists) && (objExp.Visible) && (objExp.Enabled)){
+      fStatus = true;
+    }
+  }catch (e){
+    Log.Error("Object existence was failed: " + e.message);
+  }
+  return fStatus;
+}
+
+// #################################################### 03 ####################################################
+// Description    : Waiting until the expected object is displayed on screen
+// arg - objExp   : Argument contains an expected object
+// arg - strExp   : Argument contains a name of an expected object
+// ret - fStatus  : A boolean variable contains the status of the function
+
+function WaitingForObject(objExp)
+{
+  // Initializing Variables
+  var fStatus= false;
+  var lCounter;
+  try{
+    // Waiting for 300 seconds for an expected object
+    for (lCounter = 1; lCounter <= 300; lCounter++){
+      fStatus = objExists(objExp)
+      if (fStatus){
+        break;
+      }
+      CustomDelay("Standard", "Waiting until the object loads...");
+    }
+    if ((lCounter == 300) && (fStatus == false)){
+      Log.Error("Object not found in 300 seconds");
+    }
+  }catch (e){
+    Log.Error("Waiting for an object is failed: " + e.message);
+  }
+}
+
+// #################################################### 04 ####################################################
+// Description    : Clicking on a Button object
+// arg - objExp   : Argument contains an expected object
+// arg - strExp   : Argument contains a name of an expected object
+// ret - fStatus  : A boolean variable contains the status of the function
+
+function ClickButton(objExp)
+{
+  // Initializing Variables
+  var fStatus = false;
+  try{
+    fStatus = objExists(objExp)
+    if (fStatus){
+      objExp.scrollIntoViewIfNeeded();
+      objExp.HoverMouse();
+      objExp.focus();
+      objExp.Click()
+      Sys.Browser("chrome").Page("*").Wait();
+      CustomDelay("Standard", "Waiting to click on the button...")
+    }
+  }catch (e){
+    Log.Error("Click button operation is failed: " + e.message);
+  }
+}
+
+// #################################################### 05 ####################################################
+// Description    : Clicking on a browser button object
+// arg - objExp   : Argument contains an expected object
+// arg - strExp   : Argument contains a name of an expected object
+// ret - fStatus  : A boolean variable contains the status of the function
+
+function ClickBrowserButton(objExp)
+{
+  // Initializing Variables
+  try{
+    objExists(objExp)
+    objExp.HoverMouse();
+    objExp.Click()
+  }catch (e){
+    Log.Error("Click Browser button operation is failed: " + e.message);
+  }
+}
+
+// #################################################### 06 ####################################################
+// Description      : Click on a button and wait until the expected object displays on the screen
+// arg - objButton  : Argument contains an expected button object
+// arg - strButton  : Argument contains a name of a button object
+// arg - objExp     : Argument contains an expected object which has to display after the button click
+// arg - strExp     : Argument contains a name of an object which has to display after the button click
+// ret - fStatus    : A boolean variable contains the status of the function
+
+function ClickAndWait(objButton, objExp)
+{
+  try{
+    ClickButton(objButton);
+    WaitingForObject(objExp);
+  }catch (e){
+    Log.Error("Click on a button and wait for an expected object is failed: " + e.message);
+  }
+  return fStatus;
+}
+
+// #################################################### 07 ####################################################
+// Description      : Entering the given input value into the desired text box
+// arg - objExp     : Argument contains an expected object
+// arg - strExp     : Argument contains a name of an expected object
+// arg - strInputVal: Argument contains an input value which has to be entered
+// ret - fStatus    : A boolean variable contains the status of the function
+
+function EnterValue(objExp, strInputVal)
+{
+  var strActValue;
+  try{
+    objExists(objExp);
+    objExp.HoverMouse();
+    objExp.SetText (strInputVal);
+    CustomDelay("Standard", "Waiting until the object loads...");
+    var strActValue = objExp.Text;
+    objExp.Keys ("[Tab]");
+    if (aqString.ToUpper(strInputVal) != aqString.ToUpper(strActValue)){
+      Log.Error("Input value '" + strInputVal + "' is not entered");
+    }
+  }catch (e){
+    Log.Error("Entering value into textbox is failed: " + e.message);
+  }
+}
+
+function EnterPassword(objExp, strInputVal)
+{
+  objExp.HoverMouse();
+  objExp.SetText (strInputVal);
+  CustomDelay("Standard", "Waiting until the object loads...");
+  objExp.Keys ("[Tab]");
+}
+
+// #################################################### 08 ####################################################
+// Function         : Entering the given input value into the desired 'Text Area' object
+// arg - objExp     : Argument contains an expected object
+// arg - strExp     : Argument contains a name of an expected object
+// arg - strInputVal: Argument contains an input value which has to be entered
+// ret - fStatus    : A boolean variable contains the status of the function
+
+function EnterValue_TextArea(objExp, strInputVal)
+{
+  // Initializing Variables
+  var strActualValue;
+  try{
+    objExists(objExp)
+    objExp.HoverMouse();
+    objExp.Keys (strInputVal);
+    CustomDelay("Standard", "Waiting until the object loads...");
+    objExp.Keys ("[Tab]");
+    strActualValue = objExp.Value;
+    strInputVal = aqString.Replace(strInputVal, "\r", "");
+    if (strInputVal != strActualValue){
+      fStatus = false;
+      Log.Error("Input value " + strInputVal + " is not entered");
+    }
+  }catch (e){
+    Log.Error("Entering value into text area is failed: " + e.message);
+  }
+}
+
+// #################################################### 09 ####################################################
+// Description      : Selecting a combo-box value from the dropdown
+// arg - objCombo   : Argument contains combo-box object
+// arg - objDDArrow : Argument contains drop-down object
+// arg - objDDVal   : Argument contains a combo-box object
+// arg - strDDVal   : Argument contains combo-box value which has to be selected
+// ret - fStatus    : A boolean variable contains the status of the function
+
+function SelectCombo(objCombo, objDDArrow, objDDVal, strDDVal)
+{
+  var lCounter;
+  var fStatus;
+  try{
+    fStatus = false;
+    CustomDelay("Standard", "Waiting until the list box items loads...")
+    for (lCounter = 1; lCounter <= 100; lCounter++){
+      var strComboInnerText = objDDArrow.innerHTML;
+      if (aqString.Find(strComboInnerText, "k-i-loading") != -1){
+        CustomDelay("Standard", "Waiting until the list box items loads...");
+      }else{
+        fStatus = true;
+        CustomDelay("Standard", "Waiting until the list box items loads...");
+        break;
+      }
+    }
+    if (fStatus){
+//      Log.Enabled = false;
+      objCombo.Click();
+//      Log.Enabled = true;
+      CustomDelay("Standard", "Waiting for dropdown value")
+      if((objDDVal.Exists) && (objDDVal.Visible)){
+        fStatus = true;
+        objDDVal.scrollIntoView();
+        objDDVal.HoverMouse();
+        objDDVal.Click();
+        CustomDelay("Standard", "Selecting '" + strDDVal + "' dropdown value")
+      }
+      if (objCombo.contentText != strDDVal){
+        fStatus = false;
+        Log.Error("Value '" + strDDVal + "' has not been selected.") 
+      }
+    }
+  }catch (e){
+    Log.Error("'Select 'Combo-box value' operation is failed: " + e.message);
+  }
+  return fStatus;
+}
+
+function SelectComboNew2(objPage, objCmbPanel, strComboValue)
+{
+  var propArray = new Array("ObjectType", "className");
+  var valueArray = new Array("TextNode", "k-input")
+  objInputbox = objCmbPanel.FindChild(propArray, valueArray, 5);
+  if (objInputbox.Exists){
+    for (var i = 0; i<= 3; i++){
+      ClickButton(objInputbox);
+      strSearchText = "//li[.='" + strComboValue + "']"
+      WaitingForObjectCSS(objPage, strSearchText)
+      objInputbox.HoverMouse();
+      aqUtils.Delay(1000)
+      objInputbox.Keys (strComboValue);
+      objInputbox.Keys (strComboValue);
+      objInputbox.Keys ("[Tab]");
+      CheckIfLoadingIconAvailable()
+      var newComboValue = objInputbox.innerText;
+      if (aqString.ToUpper(strComboValue) == aqString.ToUpper(newComboValue)){
+        Log.Message("Matched")
+        break;
+      }
+      else{
+        Log.Message("Not Matched") 
+      }
+    }
+  }
+}
+
+
+
+// #################################################### 10 ####################################################
+// Description        : Expanding or Collapsing collection of items based on the input
+// arg - objTable     : Argument contains table object
+// arg - strOperation : Argument contains an input value
+// arg - strExpID     : Argument contains ID value where Expand/Collapse button has to be clicked
+// ret - fStatus      : A boolean variable contains the status of the function
+
+function ExpandTable(objExpandButton)
+{
+  var strInnerHTML = objExpandButton.innerHTML;
+  var strCurrentStatus = aqString.Find(strInnerHTML, "Expand");
+  if (strCurrentStatus != -1){
+    ClickButton(objExpandButton);
+    CustomDelay("Table Expand", "Waiting until the table expands...");
+    CheckIfLoadingIconAvailable();
+    strInnerHTML = objExpandButton.innerHTML;
+    strCurrentStatus = aqString.Find(strInnerHTML, "Expand");
+    if (strCurrentStatus == -1){
+      Log.Message("Table not expanded. Doing it again");
+      ExpandTable(objExpandButton);
+    }
+  }else{
+    strCurrentStatus = aqString.Find(strInnerHTML, "Collapse");
+    if (strCurrentStatus != -1){
+      Log.Message("Table is already expanded");
+    }else{
+      Log.Error("Expand/Collapse icon not found. Please check.");
+    }
+  }
+}
+
+
+
+
+function ExpandTable_2 (objTable, strExpectedID)
+{
+  var funcStatus = false;
+  var statusMessage = ""
+  var strInnerHTML;
+  var strCurrentStatus;
+  var loopCounter;
+  var intRowCount;
+  var loopCounter2;
+  try{
+    Log.AppendFolder("Expand " + strExpectedID);
+    intRowCount = objTable.RowCount;
+    for (loopCounter = 0; loopCounter <= intRowCount-1; loopCounter++){
+      objActualID = objTable.Cell(loopCounter, 1)
+      strActualID = trim(objActualID.innerText);
+      if (strExpectedID == strActualID){
+        funcStatus = true;
+        objExpected = objTable.Cell(loopCounter, 0);
+        break;
+      }
+    }
+    if (funcStatus){
+      strInnerHTML = objExpected.innerHTML;
+      strCurrentStatus = aqString.Find(strInnerHTML, "Expand");
+      if (strCurrentStatus != -1){
+        ClickButton(objExpected);
+        CustomDelay("Table Expand", "Waiting until the table expands...");
+        for (loopCounter2 = 0; loopCounter2 <= 30; loopCounter2++){
+          strInnerHTML = objExpected.innerHTML;
+          strCurrentStatus = aqString.Find(strInnerHTML, "Collapse");
+          if (strCurrentStatus != -1){
+            CustomDelay("Standard", "Waiting until the table expands...");
+            statusMessage = "Table 'Expand' is successful";
+            break;
+          }else{
+            CustomDelay("Standard", "Waiting until the table expands...");
+          }
+          if (loopCounter2 == 30){
+            Log.Message("Table not expanded. Doing it again")
+            ExpandTable_2(objTable, strExpectedID);
+          }
+        }
+      }else{
+        strCurrentStatus = aqString.Find(strInnerHTML, "Collapse");
+        if (strCurrentStatus != -1){
+          statusMessage = "Table is already in expanded status."
+        }else{
+          funcStatus = false;
+          statusMessage = "Expand/Collapse icon not found. Please check."
+        }
+      }
+    }   
+    LogEvents(statusMessage, funcStatus);
+  }catch (e){
+    Log.Error("Expand table operation failed: " + e.message);
+  }
+  finally{
+    Log.PopLogFolder();
+  }
+  return funcStatus;
+}
+
+function ExpandCollapseItems(objTable, strOperation, strExpID)
+{
+  var fStatus = false;
+  var sMessage = ""
+  var strInnerHTML;
+  var strCurrentStatus;
+  var strCollapseStatus;
+  var lCounter;
+  var strExpStatus;
+  var iRowCount;
+  try{
+    iRowCount = objTable.RowCount;
+    for (lCounter = 0; lCounter <= iRowCount-1; lCounter++){
+      objActualID = objTable.Cell(lCounter, 1)
+      strActualID = trim(objActualID.innerText);
+      if (strExpID == strActualID){
+        fStatus = true;
+        CustomDelay("Standard", "Waiting until the Expand/Collapse button is found..")
+        objExpected = objTable.Cell(lCounter, 0);
+        break;
+      }
+    }
+    if (fStatus){
+      if (strOperation == "Expand"){
+        strExpStatus = "Collapse";
+      }else if (strOperation == "Collapse"){
+        strExpStatus = "Expand";
+      }else{
+        fStatus = false;
+        sMessage = "Invalid operation - '" + strOperation + "'. Please check the input."
+      }
+      if (fStatus){
+        strInnerHTML = objExpected.innerHTML;
+        strCurrentStatus = aqString.Find(strInnerHTML, strOperation);
+        if (strCurrentStatus != -1){
+          fStatus = WaitingForObject(objExpected, "'" + strOperation + "' Button")
+          if (fStatus){
+            fStatus = ClickButton(objExpected, "'" + strOperation + "' Button");
+            if (fStatus){
+              CustomDelay("Table Expand", "Waiting until the table " + strOperation + "...");
+              objExpected.Refresh();
+              strInnerHTML = objExpected.innerHTML;
+              strCurrentStatus = aqString.Find(strInnerHTML, strExpStatus);
+              if (strCurrentStatus != -1){
+                sMessage = "Table " +  strOperation + " is successful";
+              }else{
+                Log.Message("Not in " + strOperation + " status. Doing it again")
+                ExpandCollapseItems(objTable, strOperation, strExpID);
+              }
+            }
+          }
+        }else{
+          strCurrentStatus = aqString.Find(strInnerHTML, strExpStatus);
+          if (strCurrentStatus != -1){
+            sMessage = "Table is already in '" + strOperation + "' status."
+          }else{
+            fStatus = false;
+            sMessage = "Expand/Collapse icon not found. Please check."
+          }
+        }
+      }
+    }   
+    LogEvents(sMessage, fStatus);
+  }catch (e){
+    Log.Error("Expand / Collapse button operation failed: " + e.message);
+  }
+  return fStatus;
+}
+
+// #################################################### 11 ####################################################
+// Description   : Check for 'Loading Icon' and wait until it disappear (Ex: On clicking Save button)
+// ret - fStatus : A boolean variable contains the status of the function
+
+function CheckIfLoadingIconAvailable()
+{
+  var fStatus   = false;
+  var sMessage  = "";
+  var lCounter;
+  var pArr      = new Array("ObjectType", "className");
+  var vArr      = new Array("Panel", "ui-widget-overlay");
+  var sBrowser  = utilities.LoginData.BrowserName;
+  try{
+    for (lCounter = 1; lCounter <= 300; lCounter++){
+      objChild = Sys.Browser(sBrowser).Page("*").FindChild(pArr, vArr, 15);
+      if ((objChild.Exists) && (objChild.Visible)){
+        fStatus = false;
+        CustomDelay("Page Load", "Waiting until loading image disappear");
+      }else{ 
+        fStatus = true;
+        CustomDelay("Standard", "Waiting until the page is loaded");
+        break;
+      }
+    }
+    if ((lCounter == 300) & (fStatus == false)){
+      Log.Error("'Loading Image'  is still exists in screen even after 300 seconds. Hence, unable to proceed further.");
+    }
+
+  }catch (e){
+    Log.Error("Checking if 'Loading Icon' available is failed: " + e.message);
+  }
+  return fStatus;
+}
+
+// #################################################### 11 ####################################################
+// Description   : Check for 'Loading Icon' in Grid section and wait until it disappear (Ex: Create new Specification)
+// ret - fStatus : A boolean variable contains the status of the function
+
+function CheckIfGridLoadingIconAvailable()
+{
+  var fStatus   = false;
+  var sMessage  = "";
+  var lCounter;
+  var pArr      = new Array("ObjectType", "className");
+  var vArr      = new Array("Panel", "partialLoadingIndicator-mainWrapper");
+  var sBrowser  = utilities.LoginData.BrowserName;
+  try{
+    for (lCounter = 1; lCounter <= 300; lCounter++){
+      objChild = Sys.Browser(sBrowser).Page("*").FindChild(pArr, vArr, 15);
+      if ((objChild.Exists) && (objChild.Visible)){
+        fStatus = false;
+        CustomDelay("Page Load", "Waiting until loading image disappear");
+      }else{ 
+        fStatus = true;
+        CustomDelay("Standard", "Waiting until the page is loaded");
+        break;
+      }
+    }
+    if ((lCounter == 300) & (fStatus == false)){
+      Log.Error("'Loading Grid Image'  is still exists in screen even after 300 seconds. Hence, unable to proceed further.");
+    }
+  }catch (e){
+    Log.Error("Checking if 'Loading Icon' available is failed: " + e.message);
+  }
+  return fStatus;
+}
+
+
+function EnterCellValue(objCell, objTextbox, strInputValue)
+{
+  ClickButton(objCell);
+  EnterValue(objTextbox, strInputValue)
+  CheckIfLoadingIconAvailable();
+}
+
+
+
+
+// #################################################### 12 ####################################################
+// Function Name          : CustomDelay
+// Function Description   : Customized 'Dealy Time' to wait based on the input 
+// arg - strDelayType     : Argument contains a type of delay (Ex: Standard, Page Load, Save Data, Refresh and etc)
+// arg - strPushMessage   : Argument contains a push message which has to be displayed 
+// ret - funcStatus       : A boolean variable contains the status of the function
+
+function CustomDelay(strDelayType, strPushMessage)
+{
+  var intCounter
+  switch (strDelayType){
+    case "Standard":
+      delaySeconds = 1;
+      break;
+    case "Dropdown Load":
+      delaySeconds = 2;
+      break;
+    case "Page Load":
+      delaySeconds = 3;
+      break;
+    case "Table Expand":
+      delaySeconds = 5;
+      break;
+      delaySeconds = 10;
+      break;
+    case "Save Data":
+      delaySeconds = 5;
+      break;
+    case "Refresh":
+      delaySeconds = 15;
+      break;
+  }
+  //  Indicator.Show();
+  Indicator.PushText(strPushMessage);
+  for (intCounter = 1; intCounter <= delaySeconds; intCounter++){
+    aqUtils.Delay(1000, Indicator.Text);
+  }
+  Indicator.PopText();
+//  Indicator.Hide();
+}
+
+// #################################################### 13 ####################################################
+// Function Name          : LogEvents
+// Function Description   : Logging execution events based on it's status and message text 
+// arg - strMessage       : Argument contains a message text to be printed
+// arg - boolStatus       : Argument contains the function status as a boolean variable
+
+function LogEvents(strMessage, boolStatus)
+{
+  if (boolStatus == true){
+    Log.Message(strMessage);
+  }else if(boolStatus == false){
+    Log.Error(strMessage)
+  }else if(boolStatus == undefined){
+    Log.Checkpoint(strMessage)
+  }
+}
+
+function TextAssertion(objActual, strExpected, strFieldName)
+{
+  var sActOutput = objActual.contentText;
+  if (sActOutput == ""){
+   sActOutput = objActual.Text;
+  }
+  var sExpOutput = strExpected;
+  sActOutput = sActOutput.toUpperCase();
+  sExpOutput = strExpected.toUpperCase();
+  sActOutput = sActOutput.trim();
+  sExpOutput = sExpOutput.trim();
+ 
+  if (sExpOutput == sActOutput){
+    Log.Checkpoint("Status: PASS;  " + strFieldName + " verification is successful", strFieldName + "\r\n Expected: " + sExpOutput + "\r\n Actual: " + sActOutput);
+  }else{
+    Log.Message("Status: FAIL;  " + strFieldName + " verification is failed", strFieldName + "\r\n Expected: " + sExpOutput + "\r\n Actual: " + sActOutput);
+  }
+}
+
+
+function GetTimeStamp()
+{
+  var aDateTime, timeStamp;
+  aDateTime=aqDateTime.Now();
+  timeStamp = aqConvert.DateTimeToFormatStr(aDateTime, "%Y-%m-%d_%H-%M-%S");
+  return timeStamp;
+}
+
+function ExcelUIComparison(varInput1, varInput2, strFieldName)
+{
+  strFieldName = aqString.ToUpper(strFieldName);
+  if (varInput1 == varInput2){
+    Log.Checkpoint("PASS: '" + strFieldName + "' value was matched between Excel and UI. [Value: " + varInput1 + "]" );
+  }else{
+    Log.Error("FAIL: '" + strFieldName + "' value was not matched between Excel and UI. [Excel " + varInput1 + "; Mozart UI: " + varInput2 + "]" );
+  }
+}
+
+
+function SaveLogs(strResultsFolderPath, strProjectName)
+{
+  
+  timeStamp = GetTimeStamp()
+  strLogFileName = strProjectName + "_" + timeStamp + ".mht";
+  strLogFilePath = strResultsFolderPath + "\\" + strLogFileName
+  Log.SaveResultsAs(strLogFilePath, lsMHT)
+
+}
+
+function PrintReport(bStatus, sMessage)
+{
+  switch (bStatus)
+  {
+    case 0:
+      Log.Checkpoint(sMessage)
+      utilities.TestStep.pass_2(sMessage);
+      break;
+    case 1:
+      Log.Error(sMessage);
+      utilities.TestStep.fail_2(sMessage);
+      break;
+    case 2:
+      Log.Warning(sMessage);
+      break;
+  }
+}
+
+
+function ClearBrowsingHistory()
+{
+  Sys.Browser("chrome").Page("*").HoverMouse();
+  Sys.Keys("!^[Del]")
+  aqUtils.Delay(3000)
+  Sys.Keys("[Tab]")
+  aqUtils.Delay(1000)
+  Sys.Keys("[Enter]")
+}
+
+
+
+
+
+//########################################################################## 06 ##############################################################################
+  
+function Assertion(expVal, actVal, argField)
+{
+  if (expVal == actVal){
+    strMessage = argField + ": Expected and Actual values are matched [" + str(actVal) + "]."
+    LogCheckpoint(strMessage);
+  }else{
+    strMessage = argField + ": Expected and Actual values are not matched [Expected: " + str(expVal) + "; Actual: " + str(actVal) + "].";
+    LogError(strMessage);
+  }
+  return [status, strMessage]
+}    
+//########################################################################## 07 ##############################################################################      
+function CorrectRGBComponent(component)
+{
+  component = aqConvert.VarToInt(component)
+  if (component < 0){
+    component = 0
+  }else{
+    if (component > 255){
+      component = 255
+    }
+  }
+  return component
+} 
+//########################################################################## 08 ##############################################################################
+function RGB(r, g, b)
+{
+  r = CorrectRGBComponent(r)
+  g = CorrectRGBComponent(g)
+  b = CorrectRGBComponent(b)
+  return r | (g << 8) | (b << 16)
+}
+//########################################################################## 09 ##############################################################################
+function LogMessage(sMessage)
+{
+  Attr = Log.CreateNewAttributes()
+  Attr.FontColor = RGB(0, 0, 255)
+  Attr.Bold = true;
+  Attr.BackColor = RGB(211, 211, 211)
+  // Passes the LogAttributes object to the Message function
+  Log.Message(sMessage, "", pmNormal, Attr)
+}
+//########################################################################## 10 ##############################################################################
+function LogError(sMessage)
+{
+  Attr = Log.CreateNewAttributes()
+  Attr.FontColor = RGB(0, 0, 255)
+  Attr.Bold = true;
+  Attr.BackColor = RGB(255, 0, 0)
+  // Passes the LogAttributes object to the Message function
+  Log.Error(sMessage, "", pmNormal, Attr, Sys.Desktop)
+}
+//########################################################################## 11 ##############################################################################
+function LogCheckpoint(sMessage)
+{
+  Attr = Log.CreateNewAttributes()
+  Attr.FontColor = RGB(0, 0, 255)
+  Attr.Bold = true;
+  Attr.BackColor = RGB(0, 255, 0)
+  // Passes the LogAttributes object to the Message function
+  Log.Checkpoint(sMessage, "", pmNormal, Attr, Sys.Desktop)
+}
+//########################################################################## 12 ##############################################################################
